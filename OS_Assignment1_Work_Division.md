@@ -46,10 +46,6 @@
 - One `synchronized` print method so lines never interleave.
 - Helper methods for each required event message, matching the sample output format.
 
-**Integration & output testing (0.75 sync/output marks)**
-- Test with the sample input (2 / 3 / 5) and with stress cases (capacity 1, many patients, many doctors).
-- Verify every required event appears: arrive, enter, wait outside, assigned, begin treatment, back to waiting room, finish, leave.
-
 ---
 
 ## Member 3 – Doctor
