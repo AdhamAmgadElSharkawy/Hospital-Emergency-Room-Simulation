@@ -6,7 +6,7 @@
 ## Summary
 
 | Member | Owns | 
-|---|---|---|
+|--------|------|
 | **Member 1** | `Semaphore` + `Patient` + sync review of patient side | 
 | **Member 2** | `Hospital` + `Logger` (output) + final integration/output testing | 
 | **Member 3** | `Doctor` + sync review of doctor side | 
