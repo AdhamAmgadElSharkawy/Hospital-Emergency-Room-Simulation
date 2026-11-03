@@ -3,7 +3,7 @@ public class TreatmentRooms {
     public TreatmentRooms(){
         this.rooms = new Semaphore(2);
     }
-    public Boolean tryAcquireRoom() throws InterruptedException{
+    public boolean tryAcquireRoom() throws InterruptedException{
         return rooms.tryAcquireTreatmentRoom();
     }
     public void emptyRoom() throws InterruptedException{
