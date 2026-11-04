@@ -16,11 +16,14 @@ public class WaitingRoom {
     }
     public void arrive(int id) throws InterruptedException{
         System.out.println("P"+id+" arrived.");
-        if(emptySeats.value<=0){
-            System.out.println("The waiting room is full.");
-            System.out.println("P"+id+" is waiting outside for an available seat.");
+        synchronized (emptySeats){
+            if(emptySeats.value<=0){
+                System.out.println("The waiting room is full.");
+                System.out.println("P"+id+" is waiting outside for an available seat.");
+            }
+            emptySeats.P();
         }
-        emptySeats.P();
+        
         mutex.P();
         array[in] = id;
         in = (in + 1) % capacity;
