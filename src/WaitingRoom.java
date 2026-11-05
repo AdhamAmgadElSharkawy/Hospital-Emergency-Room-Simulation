@@ -15,11 +15,13 @@ public class WaitingRoom {
         this.mutex = new Semaphore(1);
     }
     public void arrive(int id) throws InterruptedException{
-        System.out.println("P"+id+" arrived.");
+        Logger.print("P"+id+" arrived.");
+        takeSeat(id);
+    }
+    public void takeSeat(int id) throws InterruptedException{
         synchronized (emptySeats){
             if(emptySeats.value<=0){
-                System.out.println("The waiting room is full.");
-                System.out.println("P"+id+" is waiting outside for an available seat.");
+                Logger.print("The waiting room is full.\nP" + id + " is waiting outside for an available seat.");
             }
             emptySeats.P();
         }
@@ -27,7 +29,7 @@ public class WaitingRoom {
         mutex.P();
         array[in] = id;
         in = (in + 1) % capacity;
-        System.out.println("P"+id+" entered the waiting room.");
+        Logger.print("P"+id+" entered the waiting room.");
         mutex.V();
         fullseats.V();
     }

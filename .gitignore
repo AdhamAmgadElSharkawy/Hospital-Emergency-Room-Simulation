@@ -3,4 +3,5 @@
 *.iml
 out/
 target/
+src/build
 .DS_Store
