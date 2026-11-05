@@ -39,5 +39,7 @@ public class WaitingRoom {
         }
         emptySeats.V();
         return patientId;
+
+
     }
 }
