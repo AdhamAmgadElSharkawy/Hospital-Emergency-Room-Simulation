@@ -1,22 +1,20 @@
+import javax.management.RuntimeErrorException;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Hospital {
   public static void main(String[] args) {
     Scanner scanner = new Scanner(System.in);
+    System.out.println("Enter the capacity of the waiting room: ");
     int waitingRoomCapacity = scanner.nextInt();
+    System.out.println("Enter Number of doctors: ");
     int numberOfDoctors = scanner.nextInt();
+    System.out.println("Enter the number of patients: ");
     int numberOfPatients = scanner.nextInt();
     AtomicInteger counter = new AtomicInteger(0);
 
     WaitingRoom wRoom = new WaitingRoom(waitingRoomCapacity);
     TreatmentRooms tRoom = new TreatmentRooms();
-
-    Logger.print("Patients arriving:");
-    for (int i = 1; i <= numberOfPatients; i++) {
-      Logger.header("P" + i + " ");
-    }
-    Logger.print("");
 
     Thread dthreads[] = new Thread[numberOfDoctors];
     for (int i = 1; i <= numberOfDoctors; i++) {

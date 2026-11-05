@@ -28,7 +28,7 @@ public class Doctor implements Runnable {
                     try {
                         Logger.print("Doctor " + id + " acquired a treatment room.");
                         Logger.print("Doctor " + id + " begins treating P" + patientId + ".");
-                        Thread.sleep(ThreadLocalRandom.current().nextInt(10000));
+                        Thread.sleep(ThreadLocalRandom.current().nextInt(5000));
                         Logger.print("Doctor " + id + " finished treating P" + patientId + ".");
                     } finally {
                         treatmentroom.emptyRoom();
