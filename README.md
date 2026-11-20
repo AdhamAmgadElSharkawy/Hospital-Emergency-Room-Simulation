@@ -1,81 +1,233 @@
-# CS241 OS – Assignment 1: Hospital ER Simulation
-## Work Division (4 members)
+# Hospital Emergency Room Simulation 🏥
+
+A multithreaded **Hospital Emergency Room Simulation** built in **Java** for the **CS241 Operating Systems** course.  
+The project models patients arriving at an emergency room, waiting for available seats, and being treated by doctors in a limited number of treatment rooms.
+
+It demonstrates core operating-systems concepts in practice: **threads**, **synchronization**, **counting semaphores**, the **producer–consumer bounded-buffer problem**, and **timeout-based resource acquisition** — all through a simple command-line simulation.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Technology Stack](#technology-stack)
+- [Features](#features)
+- [How the Simulation Works](#how-the-simulation-works)
+- [Project Structure](#project-structure)
+- [Build & Run](#build--run)
+- [Contributors](#contributors)
 
 ---
 
-## Summary
+## Overview
 
-| Member | Owns | 
-|--------|------|
-| **Member 1** | `Semaphore` + `Patient` + sync review of patient side | 
-| **Member 2** | `Hospital` + `Logger` (output) + final integration/output testing | 
-| **Member 3** | `Doctor` + sync review of doctor side | 
-| **Member 4** | `WaitingRoom` + `TreatmentRooms` (shared resources) + sync review | 
+The emergency room has three configurable parts:
 
----
+- A **waiting room** with a fixed number of seats.
+- A fixed number of **doctors** working concurrently.
+- A fixed number of **patients** arriving at the same time.
 
-## Member 1 – Semaphore & Patient
+Each patient is handled by a separate thread, and each doctor runs in its own thread. Doctors take patients from the waiting room, attempt to acquire one of the **two treatment rooms**, and either treat the patient or send them back if no room becomes available within the timeout.
 
-**`Semaphore` class**
-- Counting semaphore built with `synchronized`, `wait()`, `notifyAll()` (as in the labs).
-- Methods: `acquire()`, `release()`.
-- Custom method: `boolean tryAcquire(long timeoutMillis)` – returns `false` if no permit becomes available in time (handle spurious wakeups using a deadline loop).
-- Optional: `tryAcquire()` with zero timeout (non-blocking) – needed to detect "waiting room is full".
-
-**`Patient` class** (thread)
-1. Print "arrived".
-2. Try to get a seat: if the waiting room is full, print "waiting room is full / waiting outside", then block until a seat is free.
-3. Enter the waiting room and print "entered the waiting room".
-4. Block on a personal "treatment finished" semaphore; when released by the doctor, print "left".
-- Handle the case where a doctor sends the patient **back**: the patient thread (not the doctor) re-enters the waiting room, so doctors never block on a full room.
-
-**Sync review:** patient-side correctness (no lost wake-ups, no double entry).
+All simulation events are printed through a synchronized logger so that output from concurrent threads never interleaves.
 
 ---
 
-## Member 2 – Hospital, Output & Integration
+## Prerequisites
 
-**`Hospital` class** (main)
-- Read: waiting-room capacity, number of doctors, number of patients.
-- Create the shared resources, `Logger`, doctors, and patients; start all threads.
-- Print the "Patients arriving: P1 P2 …" header.
-- Wait for all threads to finish (`join`), then print "All patients have been treated." and "Simulation completed."
-- Clean shutdown of doctors once all patients are treated (e.g., shared "treated count" or poison-pill).
+To build and run this project, you need:
 
-**`Logger` class**
-- One `synchronized` print method so lines never interleave.
-- Helper methods for each required event message, matching the sample output format.
+- **Java JDK 8 or newer**
+- **Git**
+- A terminal (Linux, macOS, Windows PowerShell, or Git Bash)
 
----
+Verify your Java installation with:
 
-## Member 3 – Doctor
-
-**`Doctor` class** (thread) – loop:
-1. Idle until a patient is available (`waitingRoom.take()` blocks).
-2. Print "assigned to Px".
-3. Print "trying to acquire a treatment room"; call `treatmentRooms.tryAcquire(3000)`.
-4. **Acquired:** print acquired / begins treating → `Thread.sleep(random)` → print finished → release room → print released → signal the patient to leave → print "now available".
-5. **Not acquired:** print "could not acquire a treatment room / sending Px back" → hand the patient back for re-entry (no blocking on a full room).
-6. Repeat until all patients are treated, then exit.
-
-**Sync review:** doctor-side correctness, no deadlock when rooms are busy and the waiting room is full.
+```bash
+java -version
+javac -version
+```
 
 ---
 
-## Member 4 – Shared Resources
+## Installation
 
-**`WaitingRoom` class** (Bounded Buffer – Producer/Consumer)
-- Queue of patients with three semaphores: `emptySeats` (= capacity), `fullSeats` (= 0), `mutex` (= 1).
-- `put(patient)` (producer side): `emptySeats.acquire → mutex → add → mutex.release → fullSeats.release`.
-- `take()` (consumer side): `fullSeats.acquire → mutex → remove → mutex.release → emptySeats.release`.
-- `isFull()` / non-blocking attempt, so the patient can print "waiting room is full" before blocking.
+1. **Clone the repository:**
 
-**`TreatmentRooms` class**
-- Wraps a `Semaphore(2)` (only two rooms in the entire ER) – independent from the waiting room.
-- `tryAcquire(timeout)` and `release()`.
+    ```bash
+    git clone https://github.com/AdhamAmgadElSharkawy/Hospital-Emergency-Room-Simulation.git
+    cd Hospital-Emergency-Room-Simulation
+    ```
 
-**Sync review:** shared resources are race-free; document why deadlock cannot occur.
+2. **Make sure the JDK is available:**
+
+    The project has **no external dependencies**, so no package manager or build tool is required.
 
 ---
 
+## Technology Stack
 
+- **Language:** Java
+- **Concurrency:** Java threads (`Runnable`), `synchronized`, `wait()` / `notify()`
+- **Synchronization primitives:** Custom counting semaphores
+- **Design patterns:** Producer–Consumer, bounded buffer, resource pooling
+- **Interface:** Command-line (CLI)
+- **Build tools:** `javac` and `java` (no third-party libraries)
+
+---
+
+## Features
+
+### Configurable Simulation
+- Choose the **waiting-room capacity**
+- Choose the **number of doctors**
+- Choose the **number of patients**
+- Treatment rooms are limited to **two**, shared by all doctors
+
+### Patient & Waiting Room Management
+- Every patient runs on a separate thread
+- Patients print when they arrive and when they enter the waiting room
+- If the waiting room is full, patients wait outside until a seat becomes available
+- The waiting room is implemented as a **bounded buffer** using counting semaphores
+- Patients sent back by a doctor re-enter the waiting room safely
+
+### Doctor & Treatment Room Management
+- Every doctor runs on a separate thread
+- Doctors take the next patient from the waiting room
+- A doctor tries to acquire a treatment room with a **3-second timeout**
+- If a room is acquired, the doctor treats the patient for a random duration, releases the room, and marks the patient as treated
+- If no room is available, the doctor sends the patient back to the waiting room instead of blocking forever
+- Doctors continue working until all patients have been treated
+
+### Concurrency & Synchronization
+- Custom counting semaphore built with `synchronized`, `wait()`, and `notify()`
+- Semaphore-based bounded buffer with `emptySeats` and `fullSeats` counters
+- Separate semaphore controlling access to the two treatment rooms
+- Timeout-aware room acquisition to avoid deadlock when rooms are busy
+- Thread-safe logging so messages from different threads never mix
+- Clean shutdown of all doctor threads after the last patient is treated
+
+### Reliable Output
+- Synchronized event logging for readable, consistent console output
+- Clear status messages for arrivals, room assignments, treatments, releases, and retries
+- Final completion messages after every patient has been treated
+
+---
+
+## How the Simulation Works
+
+1. The program asks for the waiting-room capacity, number of doctors, and number of patients.
+2. All doctor threads and patient threads are started.
+3. Each patient:
+   - Announces arrival.
+   - Tries to take a seat in the waiting room.
+   - Waits outside if the room is full.
+   - Blocks until a doctor finishes treating them.
+4. Each doctor:
+   - Waits for a patient to become available.
+   - Tries to acquire one of the two treatment rooms within 3 seconds.
+   - Treats the patient if successful, then releases the room.
+   - Sends the patient back to the waiting room if unsuccessful.
+5. The main thread waits until every patient has been treated, then stops the doctors and prints the completion messages.
+
+### Synchronization Overview
+
+| Component | Mechanism | Purpose |
+|-----------|-----------|---------|
+| `Semaphore` | `synchronized`, `wait()`, `notify()` | Custom counting semaphore with timeout support |
+| `WaitingRoom` | `emptySeats` / `fullSeats` semaphores + synchronized queue | Producer–Consumer bounded buffer |
+| `TreatmentRooms` | Counting semaphore initialized to `2` | Limits treatment to two rooms |
+| `Logger` | Synchronized static methods | Prevents interleaved console output |
+| `Hospital` | `AtomicInteger`, `interrupt()`, `join()` | Tracks progress and shuts down threads cleanly |
+
+### Sample Run
+
+```text
+Enter the capacity of the waiting room:
+3
+Enter Number of doctors:
+2
+Enter the number of patients:
+4
+
+P1 arrived.
+P1 entered the waiting room.
+P2 arrived.
+P2 entered the waiting room.
+Doctor 1 is assigned to P1.
+Doctor 1 is trying to acquire a treatment room.
+Doctor 1 acquired a treatment room.
+Doctor 1 begins treating P1.
+...
+Doctor 1 finished treating P1.
+Doctor 1 released the treatment room.
+P1 left.
+Doctor 1 is now available.
+...
+All patients have been treated.
+Simulation completed.
+```
+
+> If the waiting room becomes full, patients wait outside and enter only after a seat is released. If both treatment rooms are busy for more than 3 seconds, the doctor sends the patient back to the waiting room to try again later.
+
+---
+
+## Project Structure
+
+```text
+src/
+├── Hospital.java        # Entry point: reads input, starts threads, manages shutdown
+├── Patient.java         # Patient thread
+├── Doctor.java          # Doctor thread
+├── WaitingRoom.java     # Bounded-buffer waiting room
+├── TreatmentRooms.java  # Semaphore-based pool of two treatment rooms
+├── Semaphore.java       # Custom counting semaphore with timeout acquisition
+└── Logger.java          # Synchronized console output
+```
+
+---
+
+## Build & Run
+
+1. **Compile the source files:**
+
+    ```bash
+    mkdir -p out
+    javac -d out src/*.java
+    ```
+
+    On Windows, you can compile all files explicitly if your shell does not expand the wildcard:
+
+    ```bash
+    javac -d out src/Semaphore.java src/Patient.java src/Doctor.java src/WaitingRoom.java src/TreatmentRooms.java src/Logger.java src/Hospital.java
+    ```
+
+2. **Run the simulation:**
+
+    ```bash
+    java -cp out Hospital
+    ```
+
+3. **Enter the simulation parameters when prompted:**
+
+    ```text
+    Enter the capacity of the waiting room:
+    3
+    Enter Number of doctors:
+    2
+    Enter the number of patients:
+    5
+    ```
+
+The simulation output will appear directly in your terminal.
+
+> You can also open the project in an IDE such as IntelliJ IDEA and run `Hospital.main()`.
+
+---
+
+## Contributors
+
+- **Adham Amgad Eid** – [GitHub Profile](https://github.com/AdhamAmgadElSharkawy)
+- **Mohammed Atef** – [GitHub Profile](https://github.com/MohmmedAtef)
+- **Amir Mostafa** – [GitHub Profile](https://github.com/am16ir)
+- **Ammen Osama** – [GitHub Profile](https://github.com/hexonide)
