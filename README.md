@@ -1,4 +1,4 @@
-# Hospital Emergency Room Simulation 🏥
+# Hospital Emergency Room Simulation 
 
 A multithreaded **Hospital Emergency Room Simulation** built in **Java** for the **CS241 Operating Systems** course.  
 The project models patients arriving at an emergency room, waiting for available seats, and being treated by doctors in a limited number of treatment rooms.
