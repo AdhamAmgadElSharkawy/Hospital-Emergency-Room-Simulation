@@ -23,6 +23,14 @@ public class Hospital {
       dthreads[i - 1].start();
     }
 
+    // OUTPUT FIX: the expected output starts with the list of arriving patients.
+    StringBuilder arriving = new StringBuilder();
+    for (int i = 1; i <= numberOfPatients; i++) {
+      arriving.append(i > 1 ? " " : "").append("P").append(i);
+    }
+    Logger.print("Patients arriving:");
+    Logger.print(arriving.toString());
+
     Thread pthreads[] = new Thread[numberOfPatients];
     for (int i = 1; i <= numberOfPatients; i++) {
       Patient pat = new Patient(wRoom, i);
@@ -59,7 +67,7 @@ public class Hospital {
         break;
       }
     }
-    
+
     Logger.print("All patients have been treated.");
     Logger.print("Simulation completed.");
     scanner.close();
